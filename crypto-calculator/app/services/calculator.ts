@@ -43,9 +43,6 @@ export const calculate = (a: number, b: number, operation: string): number => {
     case '*':
       return a * b;
     case '/':
-      if (b === 0) {
-        throw new Error('Division by zero');
-      }
       return a / b;
     default:
       return b;
@@ -62,11 +59,21 @@ export const handleEquals = (
   }
 
   try {
-    const result = calculate(
-      parseFloat(previousValue),
-      parseFloat(currentValue),
-      previousOperation
-    );
+    const a = parseFloat(previousValue);
+    const b = parseFloat(currentValue);
+
+    // Проверка деления на ноль
+    if (previousOperation === '/' && b === 0) {
+      return 'Error';
+    }
+
+    const result = calculate(a, b, previousOperation);
+
+    // Проверка на Infinity и NaN
+    if (!isFinite(result)) {
+      return 'Error';
+    }
+
     return result.toString();
   } catch (error) {
     return 'Error';

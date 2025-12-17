@@ -1,8 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Cryptocurrency } from '../types/crypto';
 import { lightTheme } from '../constants/colors';
 import { convertCurrency, formatCryptoValue } from '../utils/conversion';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CHIP_GAP = 10;
+const HORIZONTAL_PADDING = 16;
+// Вычисляем ширину чипа так, чтобы на экране помещалось ровно 3
+const CHIP_WIDTH = (SCREEN_WIDTH - (HORIZONTAL_PADDING * 2) - (CHIP_GAP * 2)) / 3;
 
 interface SelectedCurrenciesProps {
   selectedCurrencies: Cryptocurrency[];
@@ -48,6 +54,17 @@ export default function SelectedCurrencies({
             ? convertCurrency(baseAmount, baseCurrency, currency)
             : baseAmount;
 
+          const formattedValue = formatCryptoValue(convertedAmount);
+
+          // Динамический размер шрифта в зависимости от длины
+          const getFontSize = (val: string): number => {
+            const length = val.length;
+            if (length <= 8) return 19;
+            if (length <= 12) return 16;
+            if (length <= 16) return 14;
+            return 12;
+          };
+
           return (
             <View key={currency.id} style={styles.chipWrapper}>
               <TouchableOpacity
@@ -66,10 +83,18 @@ export default function SelectedCurrencies({
                   {currency.symbol.toUpperCase()}
                 </Text>
                 <Text
-                  style={[styles.chipValue, { color: isBase ? '#FFFFFF' : theme.text }]}
+                  style={[
+                    styles.chipValue,
+                    {
+                      color: isBase ? '#FFFFFF' : theme.text,
+                      fontSize: getFontSize(formattedValue)
+                    }
+                  ]}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
                 >
-                  {formatCryptoValue(convertedAmount)}
+                  {formattedValue}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -92,8 +117,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    gap: 10,
     paddingVertical: 4,
+    gap: 10,
   },
   emptyContainer: {
     paddingHorizontal: 20,
@@ -108,13 +133,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   chipWrapper: {
-    marginRight: 8,
   },
   currencyChip: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 22,
-    minWidth: 110,
+    width: CHIP_WIDTH,
     alignItems: 'center',
   },
   chipSymbol: {

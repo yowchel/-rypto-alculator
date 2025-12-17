@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, SafeAreaView, Modal, PanResponder } from 'react-native';
 import Display from '../components/Display';
 import CalculatorButton from '../components/CalculatorButton';
 import SelectedCurrencies from '../components/SelectedCurrencies';
@@ -32,6 +32,23 @@ export default function CalculatorScreen() {
 
   // Подключаем API для получения курсов криптовалют
   const { cryptocurrencies } = useCryptoRates();
+
+  // PanResponder для обработки свайпов
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Активируем только при горизонтальном свайпе
+        const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 20;
+        return isHorizontalSwipe;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Любой свайп переключает тему
+        if (Math.abs(gestureState.dx) > 50) {
+          setIsDarkMode(prev => !prev);
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (cryptocurrencies.length > 0) {
@@ -216,12 +233,14 @@ export default function CalculatorScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <Display
-        value={displayValue}
-        expression={expression}
-        isDarkMode={isDarkMode}
-        onOpenCurrencySelector={() => setSelectorVisible(true)}
-      />
+      <View {...panResponder.panHandlers}>
+        <Display
+          value={displayValue}
+          expression={expression}
+          isDarkMode={isDarkMode}
+          onOpenCurrencySelector={() => setSelectorVisible(true)}
+        />
+      </View>
 
       <SelectedCurrencies
         selectedCurrencies={selectedCurrencies}

@@ -15,7 +15,7 @@ export const darkTheme = {
   primaryButton: '#3D4450',
   text: '#E8EAED',
   secondaryText: '#9BA3AF',
-  operatorButton: '#4A5568',
+  operatorButton: '#5A6575',
   numberButton: '#2D3340',
   equalButton: '#374151',
 };

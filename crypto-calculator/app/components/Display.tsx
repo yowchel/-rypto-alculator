@@ -17,6 +17,40 @@ export default function Display({
 }: DisplayProps) {
   const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
 
+  // Форматирование числа
+  const formatNumber = (num: string): string => {
+    if (num === 'Error' || num === '0') return num;
+
+    const numValue = parseFloat(num);
+
+    // Если число слишком большое (> 10 миллиардов), используем научную нотацию
+    if (Math.abs(numValue) >= 1e10) {
+      return numValue.toExponential(2);
+    }
+
+    // Разделяем на целую и дробную части
+    const parts = num.split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1] || '';
+
+    // Форматируем целую часть с разделителями
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  };
+
+  // Динамический размер шрифта в зависимости от длины
+  const getFontSize = (val: string): number => {
+    const length = val.length;
+    if (length <= 8) return 64;
+    if (length <= 12) return 52;
+    if (length <= 16) return 44;
+    return 36;
+  };
+
+  const formattedValue = formatNumber(value);
+  const fontSize = getFontSize(value);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
@@ -45,11 +79,10 @@ export default function Display({
         )}
 
         <Text
-          style={[styles.value, { color: theme.text }]}
+          style={[styles.value, { color: theme.text, fontSize }]}
           numberOfLines={1}
-          adjustsFontSizeToFit
         >
-          {value}
+          {formattedValue}
         </Text>
       </View>
     </View>
@@ -95,6 +128,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '300',
+    lineHeight: 24,
+    textAlign: 'center',
+    includeFontPadding: false,
+    marginTop: 2,
   },
   expression: {
     fontSize: 28,

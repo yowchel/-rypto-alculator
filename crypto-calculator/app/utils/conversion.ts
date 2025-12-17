@@ -38,9 +38,18 @@ export const convertCurrency = (
 export const formatCryptoValue = (value: number, maxDecimals: number = 8): string => {
   if (value === 0) return '0';
 
+  // Если число слишком большое (> 1 миллиард), используем научную нотацию
+  if (Math.abs(value) >= 1e9) {
+    return value.toExponential(2);
+  }
+
   // Для больших чисел показываем меньше десятичных знаков
   if (Math.abs(value) >= 1) {
-    return value.toFixed(Math.min(2, maxDecimals));
+    const formatted = value.toFixed(Math.min(2, maxDecimals));
+    // Добавляем разделители для тысяч
+    const parts = formatted.split('.');
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return parts[1] ? `${integerPart}.${parts[1]}` : integerPart;
   }
 
   // Для малых чисел показываем больше знаков
