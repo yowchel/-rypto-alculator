@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { GearIcon, PlusIcon } from 'phosphor-react-native';
 import { lightTheme } from '../constants/colors';
 
 interface DisplayProps {
@@ -7,15 +9,27 @@ interface DisplayProps {
   expression?: string;
   isDarkMode?: boolean;
   onOpenCurrencySelector?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export default function Display({
   value,
   expression = '',
   isDarkMode = false,
-  onOpenCurrencySelector
+  onOpenCurrencySelector,
+  onOpenSettings,
 }: DisplayProps) {
   const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+
+  const handleCurrencyPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onOpenCurrencySelector?.();
+  };
+
+  const handleSettingsPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onOpenSettings?.();
+  };
 
   // Форматирование числа
   const formatNumber = (num: string): string => {
@@ -54,18 +68,26 @@ export default function Display({
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.appTitle, { color: theme.secondaryText }]}>
-          The Cryptocalculator
-        </Text>
-        {onOpenCurrencySelector && (
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.primaryButton }]}
-            onPress={onOpenCurrencySelector}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.buttonsRow}>
+          {onOpenSettings && (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.primaryButton }]}
+              onPress={handleSettingsPress}
+              activeOpacity={0.7}
+            >
+              <GearIcon color="#FFFFFF" size={24} weight="regular" style={styles.icon} />
+            </TouchableOpacity>
+          )}
+          {onOpenCurrencySelector && (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.primaryButton }]}
+              onPress={handleCurrencyPress}
+              activeOpacity={0.7}
+            >
+              <PlusIcon color="#FFFFFF" size={28} weight="bold" style={styles.icon} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.displayContent}>
@@ -93,23 +115,22 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 40,
+    paddingTop: 10,
     paddingBottom: 20,
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 200,
+    height: 180,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     width: '100%',
   },
-  appTitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    letterSpacing: 0.5,
-    opacity: 0.6,
+  buttonsRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   displayContent: {
     justifyContent: 'flex-end',
@@ -118,20 +139,25 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addButtonText: {
+  icon: {
+    pointerEvents: 'none',
+  },
+  iconWrapper: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
     color: '#FFFFFF',
     fontSize: 24,
-    fontWeight: '300',
-    lineHeight: 24,
-    textAlign: 'center',
-    includeFontPadding: false,
-    marginTop: 2,
+    fontWeight: '600',
   },
   expression: {
     fontSize: 28,

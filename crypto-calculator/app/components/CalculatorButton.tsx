@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, Animated, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { BackspaceIcon } from 'phosphor-react-native';
 import { lightTheme } from '../constants/colors';
 
 interface CalculatorButtonProps {
@@ -95,20 +96,29 @@ export default function CalculatorButton({
           ]}
         >
           <View style={styles.innerShadow} />
-          <Text
-            style={[
-              styles.buttonText,
-              {
-                color: getTextColor(),
-                fontSize: buttonSize / 3,
-                textShadowColor: 'rgba(0, 0, 0, 0.3)',
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 2,
-              },
-            ]}
-          >
-            {value}
-          </Text>
+          {value === '⌫' ? (
+            <BackspaceIcon
+              color={getTextColor()}
+              size={buttonSize / 2.8}
+              weight="regular"
+              style={{ pointerEvents: 'none' }}
+            />
+          ) : (
+            <Text
+              style={[
+                styles.buttonText,
+                {
+                  color: getTextColor(),
+                  fontSize: buttonSize / 3,
+                  textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                  textShadowOffset: { width: 0, height: 1 },
+                  textShadowRadius: 2,
+                },
+              ]}
+            >
+              {value}
+            </Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
     </Animated.View>

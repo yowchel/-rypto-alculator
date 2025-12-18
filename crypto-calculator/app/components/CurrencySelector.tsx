@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { XIcon, CheckIcon } from 'phosphor-react-native';
 import { Cryptocurrency } from '../types/crypto';
 import { lightTheme } from '../constants/colors';
+import { Translations } from '../i18n/translations';
 
 interface CurrencySelectorProps {
   cryptocurrencies: Cryptocurrency[];
@@ -10,6 +13,7 @@ interface CurrencySelectorProps {
   onClearAll: () => void;
   onClose: () => void;
   isDarkMode?: boolean;
+  t: Translations;
 }
 
 export default function CurrencySelector({
@@ -19,9 +23,15 @@ export default function CurrencySelector({
   onClearAll,
   onClose,
   isDarkMode = false,
+  t,
 }: CurrencySelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+
+  const handleClearAll = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    onClearAll();
+  };
 
   const filteredCurrencies = cryptocurrencies.filter(
     (crypto) =>
@@ -36,6 +46,11 @@ export default function CurrencySelector({
   const renderCurrencyItem = ({ item }: { item: Cryptocurrency }) => {
     const isSelected = isCurrencySelected(item);
 
+    const handlePress = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onToggleCurrency(item);
+    };
+
     return (
       <TouchableOpacity
         style={[
@@ -46,7 +61,7 @@ export default function CurrencySelector({
               : 'transparent',
           },
         ]}
-        onPress={() => onToggleCurrency(item)}
+        onPress={handlePress}
         activeOpacity={0.7}
       >
         <View style={styles.leftSection}>
@@ -70,7 +85,7 @@ export default function CurrencySelector({
           ]}
         >
           {isSelected && (
-            <Text style={styles.checkmark}>✓</Text>
+            <CheckIcon color="#FFFFFF" size={16} weight="bold" />
           )}
         </View>
       </TouchableOpacity>
@@ -80,13 +95,16 @@ export default function CurrencySelector({
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Выберите валюты</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t.selectCurrency}</Text>
         <TouchableOpacity
           style={styles.closeButton}
-          onPress={onClose}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onClose();
+          }}
           activeOpacity={0.7}
         >
-          <Text style={[styles.closeButtonText, { color: theme.text }]}>✕</Text>
+          <XIcon color={theme.text} size={28} weight="regular" style={styles.icon} />
         </TouchableOpacity>
       </View>
 
@@ -99,7 +117,7 @@ export default function CurrencySelector({
               color: theme.text,
             },
           ]}
-          placeholder="Поиск..."
+          placeholder={t.searchCurrency}
           placeholderTextColor={theme.secondaryText}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -109,10 +127,10 @@ export default function CurrencySelector({
         {selectedCurrencies.length > 0 && (
           <TouchableOpacity
             style={[styles.clearButton, { backgroundColor: '#FF3B30' }]}
-            onPress={onClearAll}
+            onPress={handleClearAll}
             activeOpacity={0.7}
           >
-            <Text style={styles.clearButtonText}>Сбросить все</Text>
+            <Text style={styles.clearButtonText}>{t.clearAll}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -146,15 +164,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    pointerEvents: 'none',
+  },
+  iconWrapper: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
     fontSize: 28,
-    fontWeight: '300',
-    lineHeight: 32,
+    fontWeight: '400',
   },
   searchContainer: {
     paddingHorizontal: 16,
@@ -216,6 +242,6 @@ const styles = StyleSheet.create({
   checkmark: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: 'bold',
   },
 });

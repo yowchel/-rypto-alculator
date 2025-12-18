@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import NetInfo from '@react-native-community/netinfo';
 import { Cryptocurrency, ExchangeRate } from '../types/crypto';
 import { getTopCryptocurrencies } from '../services/api';
 
@@ -10,12 +11,26 @@ export const useCryptoRates = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number | null>(null);
+  const [isOffline, setIsOffline] = useState<boolean>(false);
 
   const fetchCryptocurrencies = async () => {
     setLoading(true);
     setError(null);
 
     try {
+      // Проверка подключения к интернету (опционально, не блокирует выполнение)
+      try {
+        const netInfo = await NetInfo.fetch();
+        if (!netInfo.isConnected) {
+          setIsOffline(true);
+        } else {
+          setIsOffline(false);
+        }
+      } catch (netError) {
+        console.log('NetInfo check failed, продолжаем без проверки:', netError);
+        setIsOffline(false);
+      }
+
       const data = await getTopCryptocurrencies(100);
       setCryptocurrencies(data);
       setLastUpdate(Date.now());
@@ -24,8 +39,9 @@ export const useCryptoRates = () => {
       // current_price напрямую из данных криптовалют для конвертации
       // Это позволяет избежать rate limiting от CoinGecko API
     } catch (err) {
-      // Не устанавливаем ошибку, так как API уже возвращает fallback данные
-      console.log('Используются локальные данные');
+      const errorMessage = err instanceof Error ? err.message : 'Ошибка загрузки данных';
+      setError(errorMessage);
+      console.log('Используются локальные данные:', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -50,6 +66,7 @@ export const useCryptoRates = () => {
     loading,
     error,
     lastUpdate,
+    isOffline,
     refreshRates,
     shouldRefresh: shouldRefresh(),
   };

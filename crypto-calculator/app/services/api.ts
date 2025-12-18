@@ -104,21 +104,34 @@ export const getTopCryptocurrencies = async (limit: number = 100): Promise<Crypt
     const axiosError = error as AxiosError;
 
     if (axiosError.response) {
-      console.error('API Error:', axiosError.response.status, axiosError.response.data);
+      const status = axiosError.response.status;
 
-      // Если это 429 (rate limit) или другая серверная ошибка, используем mock данные
-      if (axiosError.response.status === 429 || axiosError.response.status >= 500) {
-        console.log('Используются mock данные из-за проблем с API');
+      // Rate limit error
+      if (status === 429) {
+        console.warn('⚠️ API Rate limit exceeded. Используются локальные данные.');
         return MOCK_CRYPTOCURRENCIES;
       }
+
+      // Server errors (500-599)
+      if (status >= 500) {
+        console.error('❌ Ошибка сервера CoinGecko:', status);
+        return MOCK_CRYPTOCURRENCIES;
+      }
+
+      // Client errors (400-499, except 429)
+      console.error('❌ Ошибка запроса:', status, axiosError.response.data);
+      return MOCK_CRYPTOCURRENCIES;
     } else if (axiosError.request) {
-      console.error('Network Error - no response received');
-      console.log('Используются mock данные из-за сетевой ошибки');
+      // Network error - no response received
+      console.error('🌐 Ошибка сети: нет ответа от сервера');
+      return MOCK_CRYPTOCURRENCIES;
+    } else if (axiosError.code === 'ECONNABORTED') {
+      // Timeout error
+      console.error('⏱️ Превышено время ожидания ответа от API');
       return MOCK_CRYPTOCURRENCIES;
     }
 
-    console.error('Error fetching cryptocurrencies:', error);
-    // Возвращаем mock данные вместо выброса ошибки
+    console.error('❌ Неизвестная ошибка при загрузке криптовалют:', error);
     return MOCK_CRYPTOCURRENCIES;
   }
 };
