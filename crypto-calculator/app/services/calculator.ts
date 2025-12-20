@@ -1,3 +1,5 @@
+import { ERROR_VALUE, isErrorValue } from '../constants/calculator';
+
 export const handleNumberInput = (currentValue: string, input: string): string => {
   if (currentValue === '0' && input !== '.') {
     return input;
@@ -64,19 +66,19 @@ export const handleEquals = (
 
     // Проверка деления на ноль
     if (previousOperation === '/' && b === 0) {
-      return 'Error';
+      return ERROR_VALUE;
     }
 
     const result = calculate(a, b, previousOperation);
 
     // Проверка на Infinity и NaN
     if (!isFinite(result)) {
-      return 'Error';
+      return ERROR_VALUE;
     }
 
     return result.toString();
   } catch (error) {
-    return 'Error';
+    return ERROR_VALUE;
   }
 };
 
@@ -85,7 +87,7 @@ export const handleClear = (): string => {
 };
 
 export const handleBackspace = (currentValue: string): string => {
-  if (currentValue === '0' || currentValue === 'Error') {
+  if (currentValue === '0' || isErrorValue(currentValue)) {
     return '0';
   }
 

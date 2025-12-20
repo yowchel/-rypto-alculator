@@ -32,7 +32,9 @@ export const useSelectedCurrencies = () => {
         setBaseCurrency(baseCurr);
       }
     } catch (error) {
-      console.error('Ошибка загрузки валют:', error);
+      if (__DEV__) {
+        console.error('Ошибка загрузки валют:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +45,9 @@ export const useSelectedCurrencies = () => {
       setSelectedCurrencies(currencies);
       await AsyncStorage.setItem(SELECTED_CURRENCIES_KEY, JSON.stringify(currencies));
     } catch (error) {
-      console.error('Ошибка сохранения валют:', error);
+      if (__DEV__) {
+        console.error('Ошибка сохранения валют:', error);
+      }
     }
   };
 
@@ -56,7 +60,9 @@ export const useSelectedCurrencies = () => {
         await AsyncStorage.removeItem(BASE_CURRENCY_KEY);
       }
     } catch (error) {
-      console.error('Ошибка сохранения базовой валюты:', error);
+      if (__DEV__) {
+        console.error('Ошибка сохранения базовой валюты:', error);
+      }
     }
   };
 

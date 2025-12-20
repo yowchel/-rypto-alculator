@@ -11,6 +11,11 @@ export interface Translations {
   search: string;
   close: string;
   clearAll: string;
+  selectCurrencies: string;
+
+  // Clipboard
+  copied: string;
+  copiedToClipboard: string;
 
   // Errors
   error: string;
@@ -30,6 +35,11 @@ export const translations: Record<Language, Translations> = {
     search: 'Поиск',
     close: 'Закрыть',
     clearAll: 'Сбросить все',
+    selectCurrencies: 'Выберите валюты',
+
+    // Clipboard
+    copied: 'Скопировано',
+    copiedToClipboard: 'Скопировано в буфер обмена',
 
     // Errors
     error: 'Ошибка',
@@ -47,6 +57,11 @@ export const translations: Record<Language, Translations> = {
     search: 'Search',
     close: 'Close',
     clearAll: 'Clear All',
+    selectCurrencies: 'Select currencies',
+
+    // Clipboard
+    copied: 'Copied',
+    copiedToClipboard: 'Copied to clipboard',
 
     // Errors
     error: 'Error',

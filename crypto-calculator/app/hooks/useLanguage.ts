@@ -19,8 +19,10 @@ export const useLanguage = () => {
         setLanguage(savedLanguage as Language);
       }
     } catch (error) {
-      console.log('Error loading language:', error);
-    } finally {
+      if (__DEV__) {
+        console.log('Error loading language:', error);
+      }
+    } finally{
       setIsLoading(false);
     }
   };
@@ -30,7 +32,9 @@ export const useLanguage = () => {
       await AsyncStorage.setItem(LANGUAGE_KEY, newLanguage);
       setLanguage(newLanguage);
     } catch (error) {
-      console.log('Error saving language:', error);
+      if (__DEV__) {
+        console.log('Error saving language:', error);
+      }
     }
   };
 

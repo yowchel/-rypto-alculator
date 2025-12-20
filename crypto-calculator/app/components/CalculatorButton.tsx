@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, Animated, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { BackspaceIcon } from 'phosphor-react-native';
-import { lightTheme } from '../constants/colors';
+import { lightTheme, darkTheme } from '../constants/colors';
 
 interface CalculatorButtonProps {
   value: string;
@@ -13,14 +13,14 @@ interface CalculatorButtonProps {
   isDarkMode?: boolean;
 }
 
-export default function CalculatorButton({
+const CalculatorButton = React.memo(function CalculatorButton({
   value,
   onPress,
   type = 'number',
   size = 'medium',
   isDarkMode = false,
 }: CalculatorButtonProps) {
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const buttonSizes = {
@@ -74,6 +74,18 @@ export default function CalculatorButton({
     onPress(value);
   };
 
+  const getAccessibilityLabel = (): string => {
+    if (value === '⌫') return 'Delete';
+    if (value === 'C') return 'Clear';
+    if (value === '=') return 'Equals';
+    if (value === '+') return 'Plus';
+    if (value === '-') return 'Minus';
+    if (value === '*') return 'Multiply';
+    if (value === '/') return 'Divide';
+    if (value === '.') return 'Decimal point';
+    return value;
+  };
+
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
@@ -81,6 +93,9 @@ export default function CalculatorButton({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={0.8}
+        accessibilityLabel={getAccessibilityLabel()}
+        accessibilityRole="button"
+        accessibilityHint={type === 'clear' ? 'Clear calculator' : type === 'equal' ? 'Calculate result' : undefined}
       >
         <LinearGradient
           colors={getGradientColors()}
@@ -123,7 +138,9 @@ export default function CalculatorButton({
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
+
+export default CalculatorButton;
 
 const styles = StyleSheet.create({
   buttonWrapper: {

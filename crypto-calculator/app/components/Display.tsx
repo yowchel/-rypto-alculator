@@ -1,8 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { GearIcon, PlusIcon } from 'phosphor-react-native';
-import { lightTheme } from '../constants/colors';
+import Clipboard from '@react-native-clipboard/clipboard';
+import { lightTheme, darkTheme } from '../constants/colors';
+import { Translations } from '../i18n/translations';
+import { isErrorValue } from '../constants/calculator';
+import { formatNumber } from '../utils/conversion';
 
 interface DisplayProps {
   value: string;
@@ -10,16 +14,19 @@ interface DisplayProps {
   isDarkMode?: boolean;
   onOpenCurrencySelector?: () => void;
   onOpenSettings?: () => void;
+  t: Translations;
 }
 
-export default function Display({
+const Display = React.memo(function Display({
   value,
   expression = '',
   isDarkMode = false,
   onOpenCurrencySelector,
   onOpenSettings,
+  t,
 }: DisplayProps) {
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
+  const [showCopiedFeedback, setShowCopiedFeedback] = useState(false);
 
   const handleCurrencyPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -31,26 +38,19 @@ export default function Display({
     onOpenSettings?.();
   };
 
-  // Форматирование числа
-  const formatNumber = (num: string): string => {
-    if (num === 'Error' || num === '0') return num;
-
-    const numValue = parseFloat(num);
-
-    // Если число слишком большое (> 10 миллиардов), используем научную нотацию
-    if (Math.abs(numValue) >= 1e10) {
-      return numValue.toExponential(2);
+  const handleLongPress = () => {
+    if (value && value !== '0' && !isErrorValue(value)) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Clipboard.setString(value);
+      setShowCopiedFeedback(true);
+      setTimeout(() => setShowCopiedFeedback(false), 2000);
     }
+  };
 
-    // Разделяем на целую и дробную части
-    const parts = num.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts[1] || '';
-
-    // Форматируем целую часть с разделителями
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-
-    return decimalPart ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+  // Форматирование значения дисплея
+  const formatDisplayValue = (num: string): string => {
+    if (isErrorValue(num)) return num;
+    return formatNumber(num, { scientificThreshold: 1e10 });
   };
 
   // Динамический размер шрифта в зависимости от длины
@@ -62,7 +62,7 @@ export default function Display({
     return 36;
   };
 
-  const formattedValue = formatNumber(value);
+  const displayValue = isErrorValue(value) ? t.error : formatDisplayValue(value);
   const fontSize = getFontSize(value);
 
   return (
@@ -74,6 +74,9 @@ export default function Display({
               style={[styles.addButton, { backgroundColor: theme.primaryButton }]}
               onPress={handleSettingsPress}
               activeOpacity={0.7}
+              accessibilityLabel="Settings"
+              accessibilityRole="button"
+              accessibilityHint="Open settings menu"
             >
               <GearIcon color="#FFFFFF" size={24} weight="regular" style={styles.icon} />
             </TouchableOpacity>
@@ -83,6 +86,9 @@ export default function Display({
               style={[styles.addButton, { backgroundColor: theme.primaryButton }]}
               onPress={handleCurrencyPress}
               activeOpacity={0.7}
+              accessibilityLabel="Add currency"
+              accessibilityRole="button"
+              accessibilityHint="Add or remove cryptocurrencies"
             >
               <PlusIcon color="#FFFFFF" size={28} weight="bold" style={styles.icon} />
             </TouchableOpacity>
@@ -90,26 +96,43 @@ export default function Display({
         </View>
       </View>
 
-      <View style={styles.displayContent}>
+      <Pressable
+        onLongPress={handleLongPress}
+        style={styles.displayContent}
+        accessibilityLabel={`Display value: ${displayValue}`}
+        accessibilityHint="Long press to copy value"
+        accessibilityRole="text"
+      >
         {expression && (
           <Text
             style={[styles.expression, { color: theme.secondaryText }]}
             numberOfLines={2}
+            accessibilityLabel={`Expression: ${expression}`}
           >
             {expression}
           </Text>
         )}
 
-        <Text
-          style={[styles.value, { color: theme.text, fontSize }]}
-          numberOfLines={1}
-        >
-          {formattedValue}
-        </Text>
-      </View>
+        <View style={styles.valueContainer}>
+          <Text
+            style={[styles.value, { color: theme.text, fontSize }]}
+            numberOfLines={1}
+            accessibilityLabel={displayValue}
+          >
+            {displayValue}
+          </Text>
+          {showCopiedFeedback && (
+            <View style={[styles.copiedBadge, { backgroundColor: theme.primaryButton }]}>
+              <Text style={styles.copiedText}>{t.copied}</Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
     </View>
   );
-}
+});
+
+export default Display;
 
 const styles = StyleSheet.create({
   container: {
@@ -164,9 +187,26 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginBottom: 10,
   },
+  valueContainer: {
+    position: 'relative',
+    alignItems: 'flex-end',
+  },
   value: {
     fontSize: 64,
     fontWeight: '300',
     letterSpacing: -1,
+  },
+  copiedBadge: {
+    position: 'absolute',
+    top: -30,
+    right: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  copiedText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

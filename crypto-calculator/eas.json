@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 13.2.2"
   },
   "build": {
     "development": {
@@ -13,11 +13,23 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "simulator": false
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
       "autoIncrement": true,
+      "distribution": "store",
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": false
+      },
+      "android": {
+        "buildType": "aab"
+      },
       "env": {
         "NODE_ENV": "production"
       }
@@ -26,9 +38,12 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@email.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-team-id"
+        "appleId": "hi@architeq.io",
+        "ascAppId": "placeholder-will-be-generated-after-app-store-connect-setup",
+        "appleTeamId": "placeholder-will-be-generated-after-enrollment"
+      },
+      "android": {
+        "track": "internal"
       }
     }
   }

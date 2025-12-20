@@ -108,30 +108,42 @@ export const getTopCryptocurrencies = async (limit: number = 100): Promise<Crypt
 
       // Rate limit error
       if (status === 429) {
-        console.warn('⚠️ API Rate limit exceeded. Используются локальные данные.');
+        if (__DEV__) {
+          console.warn('⚠️ API Rate limit exceeded. Используются локальные данные.');
+        }
         return MOCK_CRYPTOCURRENCIES;
       }
 
       // Server errors (500-599)
       if (status >= 500) {
-        console.error('❌ Ошибка сервера CoinGecko:', status);
+        if (__DEV__) {
+          console.error('❌ Ошибка сервера CoinGecko:', status);
+        }
         return MOCK_CRYPTOCURRENCIES;
       }
 
       // Client errors (400-499, except 429)
-      console.error('❌ Ошибка запроса:', status, axiosError.response.data);
+      if (__DEV__) {
+        console.error('❌ Ошибка запроса:', status, axiosError.response.data);
+      }
       return MOCK_CRYPTOCURRENCIES;
     } else if (axiosError.request) {
       // Network error - no response received
-      console.error('🌐 Ошибка сети: нет ответа от сервера');
+      if (__DEV__) {
+        console.error('🌐 Ошибка сети: нет ответа от сервера');
+      }
       return MOCK_CRYPTOCURRENCIES;
     } else if (axiosError.code === 'ECONNABORTED') {
       // Timeout error
-      console.error('⏱️ Превышено время ожидания ответа от API');
+      if (__DEV__) {
+        console.error('⏱️ Превышено время ожидания ответа от API');
+      }
       return MOCK_CRYPTOCURRENCIES;
     }
 
-    console.error('❌ Неизвестная ошибка при загрузке криптовалют:', error);
+    if (__DEV__) {
+      console.error('❌ Неизвестная ошибка при загрузке криптовалют:', error);
+    }
     return MOCK_CRYPTOCURRENCIES;
   }
 };
@@ -152,13 +164,15 @@ export const getExchangeRates = async (
   } catch (error) {
     const axiosError = error as AxiosError;
 
-    if (axiosError.response) {
-      console.error('API Error (rates):', axiosError.response.status);
-    } else if (axiosError.request) {
-      console.error('Network Error (rates) - no response received');
+    if (__DEV__) {
+      if (axiosError.response) {
+        console.error('API Error (rates):', axiosError.response.status);
+      } else if (axiosError.request) {
+        console.error('Network Error (rates) - no response received');
+      }
+      console.log('Возвращаем пустой объект курсов из-за ошибки API');
     }
 
-    console.log('Возвращаем пустой объект курсов из-за ошибки API');
     // Возвращаем пустой объект вместо выброса ошибки
     return {};
   }
@@ -174,7 +188,9 @@ export const searchCryptocurrencies = async (query: string): Promise<Cryptocurre
     );
     return filtered;
   } catch (error) {
-    console.error('Error searching cryptocurrencies:', error);
+    if (__DEV__) {
+      console.error('Error searching cryptocurrencies:', error);
+    }
     throw error;
   }
 };

@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, SafeAreaView, Modal, Animated, ScrollView, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, StyleSheet, Modal, Animated, ScrollView, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Display from '../components/Display';
 import CalculatorButton from '../components/CalculatorButton';
 import SelectedCurrencies from '../components/SelectedCurrencies';
 import CurrencySelector from '../components/CurrencySelector';
 import SettingsModal from '../components/SettingsModal';
-import { lightTheme } from '../constants/colors';
+import StatusBanner from '../components/StatusBanner';
+import LoadingScreen from '../components/LoadingScreen';
+import { lightTheme, darkTheme } from '../constants/colors';
 import {
   handleNumberInput,
   handleOperation,
@@ -16,6 +19,14 @@ import {
 } from '../services/calculator';
 import { evaluateExpression } from '../utils/expressionParser';
 import { useCryptoRates } from '../hooks/useCryptoRates';
+import {
+  ERROR_VALUE,
+  AUTO_REFRESH_INTERVAL,
+  REFRESH_CONTROL_OFFSET,
+  THEME_ANIMATION_DELAY,
+  THEME_ANIMATION_DURATION,
+} from '../constants/calculator';
+import { getNewBaseCurrency, getBaseCurrencyAfterAdd } from '../utils/baseCurrency';
 import { useLanguage } from '../hooks/useLanguage';
 import { useTheme } from '../hooks/useTheme';
 import { useSelectedCurrencies } from '../hooks/useSelectedCurrencies';
@@ -49,9 +60,12 @@ export default function CalculatorScreen() {
   } = useSelectedCurrencies();
 
   // Подключаем API для получения курсов криптовалют
-  const { cryptocurrencies, loading, refreshRates } = useCryptoRates();
+  const { cryptocurrencies, loading, refreshRates, isOffline, isUsingMockData } = useCryptoRates();
 
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
+  // Показываем загрузочный экран только при первой загрузке
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Функция переключения темы
   const handleToggleTheme = () => {
@@ -59,12 +73,12 @@ export default function CalculatorScreen() {
     Animated.sequence([
       Animated.timing(themeOpacity, {
         toValue: 0,
-        duration: 150,
+        duration: THEME_ANIMATION_DELAY,
         useNativeDriver: true,
       }),
       Animated.timing(themeOpacity, {
         toValue: 1,
-        duration: 150,
+        duration: THEME_ANIMATION_DELAY,
         useNativeDriver: true,
       }),
     ]).start();
@@ -72,27 +86,34 @@ export default function CalculatorScreen() {
     // Меняем тему в середине анимации
     setTimeout(() => {
       toggleTheme();
-    }, 150);
+    }, THEME_ANIMATION_DELAY);
   };
 
   // Функция обновления курсов с haptic feedback
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     refreshRates();
-  };
+  }, [refreshRates]);
 
-  // Автоматическое обновление курсов каждые 90 секунд
+  // Автоматическое обновление курсов
   useEffect(() => {
     const interval = setInterval(() => {
       refreshRates();
-    }, 90000); // 90 секунд = 1.5 минуты
+    }, AUTO_REFRESH_INTERVAL);
 
     return () => clearInterval(interval);
   }, [refreshRates]);
 
   useEffect(() => {
     if (cryptocurrencies.length > 0) {
-      console.log('Загружено криптовалют:', cryptocurrencies.length);
+      if (__DEV__) {
+        console.log('Загружено криптовалют:', cryptocurrencies.length);
+      }
+
+      // Скрываем загрузочный экран после первой загрузки
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
 
       // Устанавливаем USDT и BTC как базовые валюты по умолчанию
       if (selectedCurrencies.length === 0) {
@@ -108,48 +129,37 @@ export default function CalculatorScreen() {
         }
       }
     }
-  }, [cryptocurrencies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cryptocurrencies, isInitialLoad]);
 
-  const handleToggleCurrency = (crypto: Cryptocurrency) => {
+  const handleToggleCurrency = useCallback((crypto: Cryptocurrency) => {
     const isSelected = selectedCurrencies.some(c => c.id === crypto.id);
 
     if (isSelected) {
       // Удаляем валюту из выбранных
       const newCurrencies = selectedCurrencies.filter(c => c.id !== crypto.id);
       setSelectedCurrencies(newCurrencies);
-
-      // Если удалили базовую валюту, выбираем первую из оставшихся
-      if (baseCurrency?.id === crypto.id) {
-        setBaseCurrency(newCurrencies.length > 0 ? newCurrencies[0] : null);
-      }
+      setBaseCurrency(getNewBaseCurrency(crypto, baseCurrency, newCurrencies));
     } else {
       // Добавляем валюту в выбранные
       const newCurrencies = [...selectedCurrencies, crypto];
       setSelectedCurrencies(newCurrencies);
-
-      // Если это первая валюта, делаем её базовой
-      if (selectedCurrencies.length === 0) {
-        setBaseCurrency(crypto);
-      }
+      setBaseCurrency(getBaseCurrencyAfterAdd(baseCurrency, crypto, selectedCurrencies.length === 0));
     }
-  };
+  }, [selectedCurrencies, baseCurrency]);
 
-  const handleRemoveCurrency = (crypto: Cryptocurrency) => {
+  const handleRemoveCurrency = useCallback((crypto: Cryptocurrency) => {
     const newCurrencies = selectedCurrencies.filter(c => c.id !== crypto.id);
     setSelectedCurrencies(newCurrencies);
+    setBaseCurrency(getNewBaseCurrency(crypto, baseCurrency, newCurrencies));
+  }, [selectedCurrencies, baseCurrency]);
 
-    // Если удалили базовую валюту, выбираем первую из оставшихся
-    if (baseCurrency?.id === crypto.id) {
-      setBaseCurrency(newCurrencies.length > 0 ? newCurrencies[0] : null);
-    }
-  };
-
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setSelectedCurrencies([]);
     setBaseCurrency(null);
-  };
+  }, []);
 
-  const handleButtonPress = (value: string) => {
+  const handleButtonPress = useCallback((value: string) => {
     if (value === 'C') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setDisplayValue(handleClear());
@@ -220,7 +230,7 @@ export default function CalculatorScreen() {
           setWaitingForOperand(false);
         } catch (error) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          setDisplayValue('Ошибка');
+          setDisplayValue(ERROR_VALUE);
           setExpression('');
         }
       } else {
@@ -244,7 +254,7 @@ export default function CalculatorScreen() {
       setWaitingForOperand(true);
       return;
     }
-  };
+  }, [displayValue, expression, previousValue, operation, waitingForOperand, t]);
 
   const buttons = [
     [
@@ -279,18 +289,24 @@ export default function CalculatorScreen() {
     ],
   ];
 
+  // Показываем загрузочный экран при первой загрузке
+  if (isInitialLoad && loading) {
+    return <LoadingScreen isDarkMode={isDarkMode} />;
+  }
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <Animated.View style={{ flex: 1, opacity: themeOpacity }}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Animated.View style={{ flex: 1, opacity: themeOpacity, backgroundColor: theme.background }}>
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingTop: 50 }}
           refreshControl={
             <RefreshControl
               refreshing={loading}
               onRefresh={handleRefresh}
               tintColor={theme.text}
               colors={[theme.text]}
+              progressViewOffset={REFRESH_CONTROL_OFFSET}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -302,6 +318,14 @@ export default function CalculatorScreen() {
             isDarkMode={isDarkMode}
             onOpenCurrencySelector={() => setSelectorVisible(true)}
             onOpenSettings={() => setSettingsVisible(true)}
+            t={t}
+          />
+
+          <StatusBanner
+            isOffline={isOffline}
+            isUsingMockData={isUsingMockData}
+            isDarkMode={isDarkMode}
+            t={t}
           />
 
           <SelectedCurrencies
@@ -312,6 +336,7 @@ export default function CalculatorScreen() {
             onOpenSelector={() => setSelectorVisible(true)}
             onSetBaseCurrency={setBaseCurrency}
             isDarkMode={isDarkMode}
+            t={t}
           />
 
           <View style={styles.buttonsContainer}>
@@ -329,25 +354,27 @@ export default function CalculatorScreen() {
           </View>
         ))}
       </View>
-        </ScrollView>
+      </ScrollView>
 
       <Modal
         visible={selectorVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setSelectorVisible(false)}
       >
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]}>
-          <CurrencySelector
-            cryptocurrencies={cryptocurrencies}
-            selectedCurrencies={selectedCurrencies}
-            onToggleCurrency={handleToggleCurrency}
-            onClearAll={handleClearAll}
-            onClose={() => setSelectorVisible(false)}
-            isDarkMode={isDarkMode}
-            t={t}
-          />
-        </SafeAreaView>
+        <View style={[styles.modalBackground, { backgroundColor: theme.background }]}>
+          <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.background }]} edges={['left', 'right']}>
+            <CurrencySelector
+              cryptocurrencies={cryptocurrencies}
+              selectedCurrencies={selectedCurrencies}
+              onToggleCurrency={handleToggleCurrency}
+              onClearAll={handleClearAll}
+              onClose={() => setSelectorVisible(false)}
+              isDarkMode={isDarkMode}
+              t={t}
+            />
+          </SafeAreaView>
+        </View>
       </Modal>
 
       {/* Модальное окно настроек */}
@@ -360,7 +387,7 @@ export default function CalculatorScreen() {
         onSelectLanguage={setLanguage}
       />
       </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -370,12 +397,15 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     justifyContent: 'flex-end',
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginVertical: 5,
+  },
+  modalBackground: {
+    flex: 1,
   },
   modalContainer: {
     flex: 1,

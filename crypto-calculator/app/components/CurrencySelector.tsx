@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { XIcon, CheckIcon } from 'phosphor-react-native';
 import { Cryptocurrency } from '../types/crypto';
-import { lightTheme } from '../constants/colors';
+import { lightTheme, darkTheme } from '../constants/colors';
 import { Translations } from '../i18n/translations';
 
 interface CurrencySelectorProps {
@@ -26,7 +26,7 @@ export default function CurrencySelector({
   t,
 }: CurrencySelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
 
   const handleClearAll = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -63,6 +63,10 @@ export default function CurrencySelector({
         ]}
         onPress={handlePress}
         activeOpacity={0.7}
+        accessibilityLabel={`${item.name}, ${item.symbol.toUpperCase()}`}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isSelected }}
+        accessibilityHint={isSelected ? 'Tap to remove from selected currencies' : 'Tap to add to selected currencies'}
       >
         <View style={styles.leftSection}>
           <Text style={[styles.currencySymbol, { color: theme.text }]}>
@@ -94,7 +98,7 @@ export default function CurrencySelector({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: 50 }]}>
         <Text style={[styles.title, { color: theme.text }]}>{t.selectCurrency}</Text>
         <TouchableOpacity
           style={styles.closeButton}
@@ -103,6 +107,9 @@ export default function CurrencySelector({
             onClose();
           }}
           activeOpacity={0.7}
+          accessibilityLabel="Close"
+          accessibilityRole="button"
+          accessibilityHint="Close currency selector"
         >
           <XIcon color={theme.text} size={28} weight="regular" style={styles.icon} />
         </TouchableOpacity>
@@ -123,6 +130,9 @@ export default function CurrencySelector({
           onChangeText={setSearchQuery}
           autoCapitalize="none"
           autoCorrect={false}
+          accessibilityLabel="Search cryptocurrencies"
+          accessibilityHint="Type to filter cryptocurrency list"
+          accessibilityRole="search"
         />
         {selectedCurrencies.length > 0 && (
           <TouchableOpacity

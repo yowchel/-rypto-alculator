@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { XIcon, SunIcon, MoonIcon } from 'phosphor-react-native';
-import { lightTheme } from '../constants/colors';
+import { XIcon, SunIcon, MoonIcon, GlobeIcon } from 'phosphor-react-native';
+import { lightTheme, darkTheme } from '../constants/colors';
 import { Language } from '../i18n/translations';
 
 interface SettingsModalProps {
@@ -22,7 +23,7 @@ export default function SettingsModal({
   currentLanguage,
   onSelectLanguage,
 }: SettingsModalProps) {
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
 
   const handleThemeToggle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -39,11 +40,12 @@ export default function SettingsModal({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
+      <View style={[styles.modalBackground, { backgroundColor: theme.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['left', 'right']}>
+          <View style={[styles.header, { paddingTop: 50 }]}>
           <Text style={[styles.title, { color: theme.text }]}>
             {currentLanguage === 'ru' ? 'Настройки' : 'Settings'}
           </Text>
@@ -76,11 +78,13 @@ export default function SettingsModal({
                 onPress={handleThemeToggle}
                 activeOpacity={0.7}
               >
-                <SunIcon
-                  color={!isDarkMode ? '#FFFFFF' : theme.secondaryText}
-                  size={24}
-                  weight={!isDarkMode ? 'fill' : 'regular'}
-                />
+                <View style={styles.iconContainer}>
+                  <SunIcon
+                    color={!isDarkMode ? '#FFFFFF' : theme.secondaryText}
+                    size={24}
+                    weight={!isDarkMode ? 'fill' : 'regular'}
+                  />
+                </View>
                 <Text style={[
                   styles.optionText,
                   { color: !isDarkMode ? '#FFFFFF' : theme.secondaryText }
@@ -100,11 +104,13 @@ export default function SettingsModal({
                 onPress={handleThemeToggle}
                 activeOpacity={0.7}
               >
-                <MoonIcon
-                  color={isDarkMode ? '#FFFFFF' : theme.secondaryText}
-                  size={24}
-                  weight={isDarkMode ? 'fill' : 'regular'}
-                />
+                <View style={styles.iconContainer}>
+                  <MoonIcon
+                    color={isDarkMode ? '#FFFFFF' : theme.secondaryText}
+                    size={24}
+                    weight={isDarkMode ? 'fill' : 'regular'}
+                  />
+                </View>
                 <Text style={[
                   styles.optionText,
                   { color: isDarkMode ? '#FFFFFF' : theme.secondaryText }
@@ -132,12 +138,18 @@ export default function SettingsModal({
                 onPress={() => handleLanguageSelect('ru')}
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: 24 }}>🇷🇺</Text>
+                <View style={styles.iconContainer}>
+                  <GlobeIcon
+                    color={currentLanguage === 'ru' ? '#FFFFFF' : theme.secondaryText}
+                    size={24}
+                    weight={currentLanguage === 'ru' ? 'fill' : 'regular'}
+                  />
+                </View>
                 <Text style={[
                   styles.optionText,
                   { color: currentLanguage === 'ru' ? '#FFFFFF' : theme.secondaryText }
                 ]}>
-                  Русский
+                  RU
                 </Text>
               </TouchableOpacity>
 
@@ -152,23 +164,33 @@ export default function SettingsModal({
                 onPress={() => handleLanguageSelect('en')}
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: 24 }}>🇬🇧</Text>
+                <View style={styles.iconContainer}>
+                  <GlobeIcon
+                    color={currentLanguage === 'en' ? '#FFFFFF' : theme.secondaryText}
+                    size={24}
+                    weight={currentLanguage === 'en' ? 'fill' : 'regular'}
+                  />
+                </View>
                 <Text style={[
                   styles.optionText,
                   { color: currentLanguage === 'en' ? '#FFFFFF' : theme.secondaryText }
                 ]}>
-                  English
+                  EN
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </SafeAreaView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalBackground: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -233,6 +255,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     gap: 8,
+    position: 'relative',
+  },
+  iconContainer: {
+    position: 'absolute',
+    left: 20,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionText: {
     fontSize: 16,

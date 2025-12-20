@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Cryptocurrency } from '../types/crypto';
-import { lightTheme } from '../constants/colors';
+import { lightTheme, darkTheme } from '../constants/colors';
 import { convertCurrency, formatCryptoValue } from '../utils/conversion';
 
 interface CurrencyListProps {
@@ -19,7 +19,7 @@ export default function CurrencyList({
   onCurrencyPress,
   isDarkMode = false,
 }: CurrencyListProps) {
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
 
   const renderCurrencyItem = ({ item }: { item: Cryptocurrency }) => {
     const isBaseCurrency = baseCurrency?.id === item.id;

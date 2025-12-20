@@ -7,6 +7,7 @@ export const lightTheme = {
   operatorButton: '#6B7785',
   numberButton: '#FFFFFF',
   equalButton: '#4A5568',
+  border: '#D1D5DB',
 };
 
 export const darkTheme = {
@@ -18,6 +19,7 @@ export const darkTheme = {
   operatorButton: '#5A6575',
   numberButton: '#2D3340',
   equalButton: '#374151',
+  border: '#374151',
 };
 
 export type Theme = typeof lightTheme;

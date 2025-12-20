@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { Cryptocurrency } from '../types/crypto';
-import { lightTheme } from '../constants/colors';
+import { lightTheme, darkTheme } from '../constants/colors';
 
 interface CurrencyPickerProps {
   visible: boolean;
@@ -27,7 +27,7 @@ export default function CurrencyPicker({
   isDarkMode = false,
 }: CurrencyPickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
 
   const filteredCryptos = cryptocurrencies.filter(
     (crypto) =>

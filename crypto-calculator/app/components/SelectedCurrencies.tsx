@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Cryptocurrency } from '../types/crypto';
-import { lightTheme } from '../constants/colors';
+import { lightTheme, darkTheme } from '../constants/colors';
 import { convertCurrency, formatCryptoValue } from '../utils/conversion';
+import { Translations } from '../i18n/translations';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHIP_GAP = 10;
@@ -18,9 +19,10 @@ interface SelectedCurrenciesProps {
   onOpenSelector: () => void;
   onSetBaseCurrency: (crypto: Cryptocurrency) => void;
   isDarkMode?: boolean;
+  t: Translations;
 }
 
-export default function SelectedCurrencies({
+const SelectedCurrencies = React.memo(function SelectedCurrencies({
   selectedCurrencies,
   baseCurrency,
   baseAmount,
@@ -28,14 +30,15 @@ export default function SelectedCurrencies({
   onOpenSelector,
   onSetBaseCurrency,
   isDarkMode = false,
+  t,
 }: SelectedCurrenciesProps) {
-  const theme = isDarkMode ? require('../constants/colors').darkTheme : lightTheme;
+  const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
 
   if (selectedCurrencies.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.emptyText, { color: theme.secondaryText }]}>
-          Выберите валюты
+          {t.selectCurrencies}
         </Text>
       </View>
     );
@@ -55,6 +58,8 @@ export default function SelectedCurrencies({
             : baseAmount;
 
           const formattedValue = formatCryptoValue(convertedAmount);
+          const priceChange = currency.price_change_percentage_24h || 0;
+          const isPositive = priceChange >= 0;
 
           // Динамический размер шрифта в зависимости от длины
           const getFontSize = (val: string): number => {
@@ -66,58 +71,77 @@ export default function SelectedCurrencies({
           };
 
           return (
-            <View key={currency.id} style={styles.chipWrapper}>
-              <TouchableOpacity
+            <TouchableOpacity
+              key={currency.id}
+              style={[
+                styles.currencyChip,
+                {
+                  backgroundColor: isBase
+                    ? theme.primaryButton
+                    : theme.secondaryBackground,
+                },
+              ]}
+              onPress={() => onSetBaseCurrency(currency)}
+              activeOpacity={0.7}
+              accessibilityLabel={`${currency.name}, ${formattedValue}, ${priceChange >= 0 ? 'up' : 'down'} ${Math.abs(priceChange).toFixed(2)} percent`}
+              accessibilityRole="button"
+              accessibilityHint={isBase ? 'Selected as base currency' : 'Tap to set as base currency'}
+              accessibilityState={{ selected: isBase }}
+            >
+              <Text style={[styles.chipSymbol, { color: isBase ? '#FFFFFF' : theme.text }]}>
+                {currency.symbol.toUpperCase()}
+              </Text>
+              <Text
                 style={[
-                  styles.currencyChip,
+                  styles.chipValue,
                   {
-                    backgroundColor: isBase
-                      ? theme.primaryButton
-                      : theme.secondaryBackground,
-                  },
+                    color: isBase ? '#FFFFFF' : theme.text,
+                    fontSize: getFontSize(formattedValue)
+                  }
                 ]}
-                onPress={() => onSetBaseCurrency(currency)}
-                activeOpacity={0.7}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
               >
-                <Text style={[styles.chipSymbol, { color: isBase ? '#FFFFFF' : theme.text }]}>
-                  {currency.symbol.toUpperCase()}
-                </Text>
-                <Text
-                  style={[
-                    styles.chipValue,
-                    {
-                      color: isBase ? '#FFFFFF' : theme.text,
-                      fontSize: getFontSize(formattedValue)
-                    }
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.5}
-                >
-                  {formattedValue}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                {formattedValue}
+              </Text>
+              <Text
+                style={[
+                  styles.priceChange,
+                  {
+                    color: isBase
+                      ? '#FFFFFF'
+                      : isPositive
+                      ? '#34C759'
+                      : '#FF3B30',
+                  }
+                ]}
+              >
+                {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+              </Text>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
       <View style={styles.separator} />
     </View>
   );
-}
+});
+
+export default SelectedCurrencies;
 
 const styles = StyleSheet.create({
   outerContainer: {
     backgroundColor: 'transparent',
   },
   separator: {
-    height: 0.5,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginTop: 8,
+    height: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingTop: 12,
+    paddingBottom: 12,
     gap: 10,
   },
   emptyContainer: {
@@ -131,8 +155,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontWeight: '400',
-  },
-  chipWrapper: {
   },
   currencyChip: {
     paddingHorizontal: 12,
@@ -149,5 +171,10 @@ const styles = StyleSheet.create({
   chipValue: {
     fontSize: 19,
     fontWeight: '500',
+  },
+  priceChange: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
 });

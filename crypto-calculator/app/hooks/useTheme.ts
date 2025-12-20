@@ -19,7 +19,9 @@ export const useTheme = () => {
         setIsDarkMode(savedTheme === 'dark');
       }
     } catch (error) {
-      console.error('Ошибка загрузки темы:', error);
+      if (__DEV__) {
+        console.error('Ошибка загрузки темы:', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -31,7 +33,9 @@ export const useTheme = () => {
       setIsDarkMode(newTheme);
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme ? 'dark' : 'light');
     } catch (error) {
-      console.error('Ошибка сохранения темы:', error);
+      if (__DEV__) {
+        console.error('Ошибка сохранения темы:', error);
+      }
     }
   };
 
