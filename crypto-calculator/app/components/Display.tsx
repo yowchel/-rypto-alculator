@@ -7,6 +7,7 @@ import { lightTheme, darkTheme } from '../constants/colors';
 import { Translations } from '../i18n/translations';
 import { isErrorValue } from '../constants/calculator';
 import { formatNumber } from '../utils/conversion';
+import { scale, moderateScale } from '../utils/dimensions';
 
 interface DisplayProps {
   value: string;
@@ -53,13 +54,13 @@ const Display = React.memo(function Display({
     return formatNumber(num, { scientificThreshold: 1e10 });
   };
 
-  // Динамический размер шрифта в зависимости от длины
+  // Динамический размер шрифта в зависимости от длины (адаптивный)
   const getFontSize = (val: string): number => {
     const length = val.length;
-    if (length <= 8) return 64;
-    if (length <= 12) return 52;
-    if (length <= 16) return 44;
-    return 36;
+    if (length <= 8) return moderateScale(64);
+    if (length <= 12) return moderateScale(52);
+    if (length <= 16) return moderateScale(44);
+    return moderateScale(36);
   };
 
   const displayValue = isErrorValue(value) ? t.error : formatDisplayValue(value);
@@ -78,7 +79,7 @@ const Display = React.memo(function Display({
               accessibilityRole="button"
               accessibilityHint="Open settings menu"
             >
-              <GearIcon color="#FFFFFF" size={24} weight="regular" style={styles.icon} />
+              <GearIcon color="#FFFFFF" size={scale(24)} weight="regular" style={styles.icon} />
             </TouchableOpacity>
           )}
           {onOpenCurrencySelector && (
@@ -90,7 +91,7 @@ const Display = React.memo(function Display({
               accessibilityRole="button"
               accessibilityHint="Add or remove cryptocurrencies"
             >
-              <PlusIcon color="#FFFFFF" size={28} weight="bold" style={styles.icon} />
+              <PlusIcon color="#FFFFFF" size={scale(28)} weight="bold" style={styles.icon} />
             </TouchableOpacity>
           )}
         </View>
@@ -137,12 +138,12 @@ export default Display;
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingHorizontal: scale(20),
+    paddingTop: scale(10),
+    paddingBottom: scale(20),
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 180,
+    height: scale(180),
     position: 'relative',
   },
   header: {
@@ -153,18 +154,18 @@ const styles = StyleSheet.create({
   },
   buttonsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: scale(8),
   },
   displayContent: {
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
     width: '100%',
-    marginTop: 20,
+    marginTop: scale(20),
   },
   addButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: scale(44),
+    height: scale(44),
+    borderRadius: scale(22),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -179,34 +180,34 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: '600',
   },
   expression: {
-    fontSize: 28,
+    fontSize: moderateScale(28),
     fontWeight: '400',
-    marginBottom: 10,
+    marginBottom: scale(10),
   },
   valueContainer: {
     position: 'relative',
     alignItems: 'flex-end',
   },
   value: {
-    fontSize: 64,
+    fontSize: moderateScale(64),
     fontWeight: '300',
     letterSpacing: -1,
   },
   copiedBadge: {
     position: 'absolute',
-    top: -30,
+    top: scale(-30),
     right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(12),
   },
   copiedText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: moderateScale(13),
     fontWeight: '600',
   },
 });

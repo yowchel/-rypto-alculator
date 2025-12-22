@@ -22,9 +22,7 @@ import { useCryptoRates } from '../hooks/useCryptoRates';
 import {
   ERROR_VALUE,
   AUTO_REFRESH_INTERVAL,
-  REFRESH_CONTROL_OFFSET,
   THEME_ANIMATION_DELAY,
-  THEME_ANIMATION_DURATION,
 } from '../constants/calculator';
 import { getNewBaseCurrency, getBaseCurrencyAfterAdd } from '../utils/baseCurrency';
 import { useLanguage } from '../hooks/useLanguage';
@@ -306,7 +304,7 @@ export default function CalculatorScreen() {
               onRefresh={handleRefresh}
               tintColor={theme.text}
               colors={[theme.text]}
-              progressViewOffset={REFRESH_CONTROL_OFFSET}
+              progressViewOffset={50}
             />
           }
           showsVerticalScrollIndicator={false}

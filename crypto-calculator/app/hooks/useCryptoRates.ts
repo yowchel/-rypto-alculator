@@ -16,6 +16,7 @@ export const useCryptoRates = () => {
   const fetchCryptocurrencies = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const startTime = Date.now();
 
     try {
       // Проверка подключения к интернету (опционально, не блокирует выполнение)
@@ -51,7 +52,13 @@ export const useCryptoRates = () => {
         console.log('Используются локальные данные:', errorMessage);
       }
     } finally {
-      setLoading(false);
+      // Минимальная задержка для индикатора загрузки (500мс)
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, 500 - elapsed);
+
+      setTimeout(() => {
+        setLoading(false);
+      }, remainingTime);
     }
   }, []);
 

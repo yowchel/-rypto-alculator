@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { BackspaceIcon } from 'phosphor-react-native';
 import { lightTheme, darkTheme } from '../constants/colors';
+import { scale } from '../utils/dimensions';
 
 interface CalculatorButtonProps {
   value: string;
@@ -23,10 +24,11 @@ const CalculatorButton = React.memo(function CalculatorButton({
   const theme = useMemo(() => isDarkMode ? darkTheme : lightTheme, [isDarkMode]);
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
+  // Адаптивные размеры кнопок
   const buttonSizes = {
-    small: 60,
-    medium: 75,
-    large: 90,
+    small: scale(60),
+    medium: scale(75),
+    large: scale(90),
   };
 
   const buttonSize = buttonSizes[size];
@@ -144,14 +146,14 @@ export default CalculatorButton;
 
 const styles = StyleSheet.create({
   buttonWrapper: {
-    margin: 5,
+    margin: scale(5),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: scale(4),
     },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
+    shadowRadius: scale(6),
     elevation: 8,
   },
   button: {
